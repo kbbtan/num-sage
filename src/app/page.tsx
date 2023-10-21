@@ -50,7 +50,7 @@ const page = () => {
             <button className="mt-4 px-5 py-1 border border-sub-color rounded text-xl text-sub-color">Restart</button>
         </div>
     </div>
-  )
-}
+  );
+};
 
-export default page
+export default page;
