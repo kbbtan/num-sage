@@ -22,7 +22,7 @@ type GameProps = {
   setAttempted: React.Dispatch<React.SetStateAction<number>>;
 };
 
-let ROOM: Colyseus.Room;
+let ROOM: Colyseus.Room; // TODO: Move to parent
 
 const Game = ({
   counter,
@@ -34,14 +34,15 @@ const Game = ({
   const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const [locale, setLocale] = useState(DEFAULT_LOCALE);
+
   const [number, setNumber] = useState(0);
   const [prompt, setPrompt] = useState("");
-
   const [seconds, setSeconds] = useState(DEFAULT_TIMEOUT);
   const [isTiming, setIsTiming] = useState(false);
+
   const [roomID, setRoomID] = useState("");
   const [playerID, setPlayerID] = useState("");
-  const [playerScores, setPlayerScores] = useState<{ [id: string]: number }>();
+  const [playerScores, setPlayerScores] = useState<{ [id: string]: number }>(); // TODO: Move to parent
 
   const inputRef = useRef<HTMLInputElement>(null);
   const promptRef = useRef<HTMLHeadingElement>(null);
@@ -96,6 +97,7 @@ const Game = ({
         setIsTiming(false);
         setSeconds(seconds);
         setIsCompleted(true);
+        // TODO: handle ROOM "end" event
       }, seconds * 1000);
 
       ROOM?.send("start");

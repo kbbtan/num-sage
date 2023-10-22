@@ -1,5 +1,7 @@
 import { useRouter } from "next/navigation";
 
+import { isEmpty } from "@/utils/helper";
+
 type ResultsProps = {
   correct: number;
   incorrect: { [prompt: string]: number };
@@ -37,18 +39,24 @@ const Results = ({
           <h2 className="text-2xl text-text-accent">Missed Numbers:</h2>
 
           <ol className="mt-2 w-full rounded border border-sub-color">
-            {Object.entries(incorrect)
-              .sort((a, b) => b[1] - a[1])
-              .map(([key, value]) => (
-                <li
-                  key={key}
-                  className="flex justify-between bg-bg-color px-5 py-3 text-xl text-text-accent"
-                >
-                  <span>
-                    {key}: {value}
-                  </span>
-                </li>
-              ))}
+            {isEmpty(incorrect) ? (
+              <li className="flex justify-between bg-bg-color px-5 py-3 text-xl text-text-accent">
+                <span>You didn&rsquo;t miss any numbers! 🎉</span>
+              </li>
+            ) : (
+              Object.entries(incorrect)
+                .sort((a, b) => b[1] - a[1])
+                .map(([key, value]) => (
+                  <li
+                    key={key}
+                    className="flex justify-between bg-bg-color px-5 py-3 text-xl text-text-accent"
+                  >
+                    <span>
+                      {key}: {value}
+                    </span>
+                  </li>
+                ))
+            )}
           </ol>
         </div>
       </div>
