@@ -44,8 +44,7 @@ const Results = ({
                   key={key}
                   className="flex justify-between bg-bg-color px-5 py-3 text-xl text-text-accent"
                 >
-                  <span>{key}</span>
-                  <span>{value}</span>
+                  <span>{key}: {value}</span>
                 </li>
               ))}
           </ol>
