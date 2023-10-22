@@ -24,6 +24,9 @@ export class MyRoom extends Room<MyRoomState> {
         solved: player.solved,
       });
     });
+    this.onMessage("unlock", (client, message) => {
+      this.unlock();
+    });
   }
 
   onJoin(client: Client, options: any) {

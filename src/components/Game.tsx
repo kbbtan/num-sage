@@ -10,49 +10,39 @@ import {
   DEFAULT_LOCALE,
   DEFAULT_TIMEOUT,
 } from "@/utils/constants";
+import { isEmpty } from "@/utils/helper";
 import { CLIENT } from "@/utils/multiplayer";
 import { numToString } from "@/utils/numberConverter";
-
-type GameProps = {
-  counter: number;
-  roomID: string;
-  playerID: string;
-  setCounter: React.Dispatch<React.SetStateAction<number>>;
-  setIncorrect: React.Dispatch<
-    React.SetStateAction<{ [prompt: string]: number }>
-  >;
-  setIsCompleted: React.Dispatch<React.SetStateAction<boolean>>;
-  setAttempted: React.Dispatch<React.SetStateAction<number>>;
-  setRoomID: React.Dispatch<React.SetStateAction<string>>;
-  setPlayerID: React.Dispatch<React.SetStateAction<string>>;
-  setFinalScores: React.Dispatch<
-    React.SetStateAction<{ [id: string]: number }>
-  >;
-};
+import { useAppStore } from "@/utils/store";
 
 let ROOM: Colyseus.Room;
 
-const Game = ({
-  counter,
-  roomID,
-  playerID,
-  setCounter,
-  setIncorrect,
-  setAttempted,
-  setRoomID,
-  setPlayerID,
-  setIsCompleted,
-  setFinalScores,
-}: GameProps) => {
+const Game = () => {
   const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
-  const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const [locale, setLocale] = useState(DEFAULT_LOCALE);
+  const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
 
   const [number, setNumber] = useState(0);
   const [prompt, setPrompt] = useState("");
   const [seconds, setSeconds] = useState(DEFAULT_TIMEOUT);
   const [isTiming, setIsTiming] = useState(false);
-  const [playerScores, setPlayerScores] = useState<{ [id: string]: number }>();
+
+  const {
+    counter,
+    roomID,
+    playerScores,
+    finalScores,
+    incrementCounter,
+    updateIncorrect,
+    setIsCompleted,
+    incrementAttempted,
+    setRoomID,
+    setPlayerID,
+    updateFinalScores,
+    updatePlayerScores,
+    setPlayerScores,
+    setFinalScores,
+  } = useAppStore();
 
   const inputRef = useRef<HTMLInputElement>(null);
   const promptRef = useRef<HTMLHeadingElement>(null);
@@ -81,11 +71,14 @@ const Game = ({
       }, 1000);
 
       setTimeout(() => {
+        ROOM?.send("end");
         clearInterval(id);
         setIsTiming(false);
         setSeconds(seconds);
+        updatePlayerScores((prev) => {
+          return Object.fromEntries(Object.keys(prev).map((key) => [key, 0]));
+        });
         setIsCompleted(true);
-        ROOM?.send("end");
       }, seconds * 1000);
 
       ROOM?.send("start");
@@ -98,11 +91,11 @@ const Game = ({
       if (inputNumber === number) {
         ROOM?.send("solve");
         inputRef.current!.value = "";
-        setCounter((prev) => prev + 1);
+        incrementCounter();
         generatePrompt(locale);
       } else {
         promptRef.current!.style.color = "red";
-        setIncorrect((prev) => ({
+        updateIncorrect((prev) => ({
           ...prev,
           [prompt]: (prev[prompt] || 0) + 1,
         }));
@@ -110,7 +103,7 @@ const Game = ({
           promptRef.current!.style.color = "white";
         }, 500);
       }
-      setAttempted((prev) => prev + 1);
+      incrementAttempted();
     }
   };
 
@@ -120,24 +113,32 @@ const Game = ({
         console.log(room.sessionId, "joined", room.name);
         setRoomID(room.roomId);
         setPlayerID(room.sessionId);
+
         room.onMessage("players", (res: IterableIterator<string>) => {
           setPlayerScores(
             Object.fromEntries(
               Array.from(res).map((playerID) => [playerID, 0]),
             ),
           );
+          setFinalScores(
+            Object.fromEntries(
+              Array.from(res).map((playerID) => [playerID, -1]),
+            ),
+          );
         });
         room.onMessage("update", (res: { id: string; solved: number }) => {
-          setPlayerScores((prev) => ({
+          updatePlayerScores((prev) => ({
             ...prev,
             [res.id]: res.solved,
           }));
         });
         room.onMessage("final", (res: { id: string; solved: number }) => {
-          setFinalScores((prev) => ({
+          updateFinalScores((prev) => ({
             ...prev,
             [res.id]: res.solved,
           }));
+          if (Object.values(finalScores).every((score) => score !== -1))
+            room.send("unlock");
         });
         ROOM = room;
       })
@@ -147,10 +148,9 @@ const Game = ({
   };
 
   const leaveRoom = () => {
-    console.log(ROOM);
     ROOM?.leave();
     setRoomID("");
-    setPlayerScores(undefined);
+    setPlayerScores({});
   };
 
   return (
@@ -215,13 +215,7 @@ const Game = ({
         </button>
       )}
 
-      {playerScores && (
-        <Leaderboard
-          roomID={roomID}
-          playerID={playerID}
-          playerScores={playerScores}
-        />
-      )}
+      {!isEmpty(playerScores) && <Leaderboard final={false} />}
     </>
   );
 };

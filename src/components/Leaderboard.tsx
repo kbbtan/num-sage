@@ -1,32 +1,36 @@
+import { useAppStore } from "@/utils/store";
+
 type LeaderboardProps = {
-  roomID: string;
-  playerID: string;
-  playerScores: { [id: string]: number };
+  final: boolean;
 };
 
-const Leaderboard = ({ roomID, playerID, playerScores }: LeaderboardProps) => (
-  <div className="mt-20 flex flex-col items-center text-xl text-text-accent">
-    <h1>Leaderboard</h1>
-    {playerScores && (
+const Leaderboard = ({ final }: LeaderboardProps) => {
+  const { roomID, playerID, playerScores, finalScores } = useAppStore();
+  const scores = final ? finalScores : playerScores;
+  return (
+    <div className="mt-20 flex flex-col items-center text-xl text-text-accent">
+      <h1>Leaderboard</h1>
+
       <ul>
-        {Object.entries(playerScores)
+        {Object.entries(scores)
           .sort((a, b) => b[1] - a[1])
-          .map(([id, score]) =>
-            id === playerID ? (
+          .map(([id, score], index) => {
+            const strScore = score === -1 ? "???" : score;
+            return id === playerID ? (
               <li key={id} className="font-bold">
-                {id} (You): {score}
+                {index + 1}. {id} (You): {strScore}
               </li>
             ) : (
               <li key={id}>
-                {id} : {score}
+                {index + 1}. {id}: {strScore}
               </li>
-            ),
-          )}
+            );
+          })}
       </ul>
-    )}
 
-    <h1 className="mt-5 text-sm text-text-accent">Room ID: {roomID}</h1>
-  </div>
-);
+      <h1 className="mt-5 text-sm text-text-accent">Room ID: {roomID}</h1>
+    </div>
+  );
+};
 
 export default Leaderboard;

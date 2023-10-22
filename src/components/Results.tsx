@@ -1,40 +1,19 @@
-import { useRouter } from "next/navigation";
-
 import { isEmpty } from "@/utils/helper";
 import Leaderboard from "./Leaderboard";
+import { useAppStore } from "@/utils/store";
 
-type ResultsProps = {
-  correct: number;
-  incorrect: { [prompt: string]: number };
-  attempted: number;
-  roomID: string;
-  playerID: string;
-  finalScores: { [id: string]: number };
-  setCorrect: React.Dispatch<React.SetStateAction<number>>;
-  setIsCompleted: React.Dispatch<React.SetStateAction<boolean>>;
-  setAttempted: React.Dispatch<React.SetStateAction<number>>;
-  setIncorrect: React.Dispatch<
-    React.SetStateAction<{ [prompt: string]: number }>
-  >;
-  setFinalScores: React.Dispatch<
-    React.SetStateAction<{ [id: string]: number }>
-  >;
-};
-
-const Results = ({
-  correct,
-  incorrect,
-  attempted,
-  roomID,
-  playerID,
-  finalScores,
-  setCorrect,
-  setIsCompleted,
-  setAttempted,
-  setIncorrect,
-  setFinalScores,
-}: ResultsProps) => {
-  const router = useRouter();
+const Results = () => {
+  const {
+    counter,
+    incorrect,
+    attempted,
+    finalScores,
+    resetCounter,
+    resetIncorrect,
+    setIsCompleted,
+    resetAttempted,
+    setFinalScores,
+  } = useAppStore();
 
   return (
     <>
@@ -42,7 +21,7 @@ const Results = ({
         <div>
           <h2 className="text-2xl text-text-accent">Accuracy:</h2>
           <h1 className="text-7xl text-accent">
-            {Math.floor((correct / attempted) * 100)}%
+            {Math.floor((counter / attempted) * 100)}%
           </h1>
         </div>
 
@@ -71,21 +50,14 @@ const Results = ({
           </ol>
         </div>
       </div>
-      {!isEmpty(finalScores) && (
-        <Leaderboard
-          roomID={roomID}
-          playerID={playerID}
-          playerScores={finalScores}
-        />
-      )}
+      {!isEmpty(finalScores) && <Leaderboard final />}
       <button
         onClick={() => {
-          setCorrect(0);
-          setAttempted(0);
-          setIsCompleted(false);
-          setIncorrect({});
+          resetCounter();
+          resetAttempted();
+          resetIncorrect();
           setFinalScores({});
-          router.push("/");
+          setIsCompleted(false);
         }}
         className="mt-4 rounded border border-sub-color px-5 py-1 text-xl text-sub-color hover:border-text-accent hover:text-text-accent"
       >
