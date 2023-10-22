@@ -27,6 +27,7 @@ export class MyRoom extends Room<MyRoomState> {
 
   onLeave(client: Client, consented: boolean) {
     this.state.players.delete(client.sessionId);
+    this.broadcast("players", Array.from(this.state.players.keys()));
     console.log(client.sessionId, "left!");
   }
 

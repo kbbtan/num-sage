@@ -4,7 +4,7 @@ const Navbar = () => {
       <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
         <div className="relative flex h-16 items-center justify-between">
           <a
-            href="#"
+            href="/"
             className="px-3 py-2 text-3xl font-medium text-text-accent"
           >
             NumSage
