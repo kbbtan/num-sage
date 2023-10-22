@@ -34,6 +34,9 @@ const convertChinese = (n: number): string => {
   if (n < 100) {
     result = result.replace("一十", "十");
   }
+  if (n > 100 && result[0] === "二") {
+    result = "两" + result.slice(1);
+  }
   return result;
 };
 
@@ -54,7 +57,7 @@ const convertKorean = (n: number): string => {
     const number = splitReverse.splice(0, 4);
     let result = number
       .map((num, idx) =>
-        num !== "0" ? numData[parseInt(num)] + unit2[idx] : ""
+        num !== "0" ? numData[parseInt(num)] + unit2[idx] : "",
       )
       .reverse()
       .join("");
