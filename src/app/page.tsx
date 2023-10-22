@@ -98,12 +98,12 @@ const Home = () => {
 
   return (
     <div className="flex h-[87vh] w-full items-center justify-center">
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center w-3/4">
         <div className="relative w-full text-center">
           {timer ? (
             <>
-              <h1>{counter}</h1>
-              <h1>{seconds}</h1>
+              <h1 className="text-green-900 text-3xl">{counter}</h1>
+              <h1 className="text-sub-color text-5xl">{seconds}</h1>
             </>
           ) : (
             <button
