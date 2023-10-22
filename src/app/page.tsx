@@ -76,7 +76,7 @@ const Home = () => {
   };
 
   return (
-    <div className="h-[87vh] w-full flex justify-center items-center">
+    <div className="flex h-[87vh] w-full items-center justify-center">
       <div className="flex flex-col items-center">
         <div className="relative w-full text-center">
           {timer ? (
@@ -86,11 +86,12 @@ const Home = () => {
             </>
           ) : (
             <button
-              className="
-                        bg-transparent text-3xl text-center
+              className={`
+                        bg-transparent text-center text-3xl
                         text-sub-color
-                        hover:text-text-accent hover:cursor-pointer
-                    "
+                        hover:cursor-pointer hover:text-text-accent
+                        ${languageMenuOpen && "text-text-accent"}
+                    `}
               onClick={() => setLanguageMenuOpen(!languageMenuOpen)}
             >
               {language}
@@ -102,7 +103,7 @@ const Home = () => {
 
         <h1
           ref={promptRef}
-          className="text-7xl my-10 font-medium text-text-accent"
+          className="my-10 text-7xl font-medium text-text-accent"
         >
           {prompt}
         </h1>
@@ -114,15 +115,15 @@ const Home = () => {
           onKeyDown={handleKeyDown}
           autoFocus
           className="
-                    w-1/2 px-5 py-2 bg-transparent border border-sub-color rounded 
-                    text-text-accent text-2xl
-                    text-center
+                    w-1/2 rounded border border-sub-color bg-transparent px-5 py-2 
+                    text-center text-2xl
+                    text-text-accent
                 "
         />
 
         <button
           onClick={restart}
-          className="mt-4 px-5 py-1 border border-sub-color rounded text-xl text-sub-color"
+          className="mt-4 rounded border border-sub-color px-5 py-1 text-xl text-sub-color hover:border-text-accent hover:text-text-accent"
         >
           Restart
         </button>
