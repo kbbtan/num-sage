@@ -27,14 +27,14 @@ const Results = ({
     <>
       <div className="mb-5 flex w-2/3 items-center justify-evenly">
         <div>
-          <h2 className="text-2xl text-sub-color">Accuracy:</h2>
+          <h2 className="text-2xl text-text-accent">Accuracy:</h2>
           <h1 className="text-7xl text-accent">
             {Math.floor((correct / attempted) * 100)}%
           </h1>
         </div>
 
         <div>
-          <h2 className="text-2xl text-sub-color">Missed Numbers:</h2>
+          <h2 className="text-2xl text-text-accent">Missed Numbers:</h2>
 
           <ol className="mt-2 w-full rounded border border-sub-color">
             {Object.entries(incorrect)
@@ -44,7 +44,9 @@ const Results = ({
                   key={key}
                   className="flex justify-between bg-bg-color px-5 py-3 text-xl text-text-accent"
                 >
-                  <span>{key}: {value}</span>
+                  <span>
+                    {key}: {value}
+                  </span>
                 </li>
               ))}
           </ol>
