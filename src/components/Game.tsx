@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import * as Colyseus from "colyseus.js";
 
-import LanguageMenu from "@/components/LanguageMenu";
+import LanguageMenu from "./LanguageMenu";
+import Leaderboard from "./Leaderboard";
 import {
   DEFAULT_LANGUAGE,
   DEFAULT_LOCALE,
@@ -14,22 +15,34 @@ import { numToString } from "@/utils/numberConverter";
 
 type GameProps = {
   counter: number;
+  roomID: string;
+  playerID: string;
   setCounter: React.Dispatch<React.SetStateAction<number>>;
   setIncorrect: React.Dispatch<
     React.SetStateAction<{ [prompt: string]: number }>
   >;
   setIsCompleted: React.Dispatch<React.SetStateAction<boolean>>;
   setAttempted: React.Dispatch<React.SetStateAction<number>>;
+  setRoomID: React.Dispatch<React.SetStateAction<string>>;
+  setPlayerID: React.Dispatch<React.SetStateAction<string>>;
+  setFinalScores: React.Dispatch<
+    React.SetStateAction<{ [id: string]: number }>
+  >;
 };
 
-let ROOM: Colyseus.Room; // TODO: Move to parent
+let ROOM: Colyseus.Room;
 
 const Game = ({
   counter,
+  roomID,
+  playerID,
   setCounter,
   setIncorrect,
   setAttempted,
+  setRoomID,
+  setPlayerID,
   setIsCompleted,
+  setFinalScores,
 }: GameProps) => {
   const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
@@ -39,10 +52,7 @@ const Game = ({
   const [prompt, setPrompt] = useState("");
   const [seconds, setSeconds] = useState(DEFAULT_TIMEOUT);
   const [isTiming, setIsTiming] = useState(false);
-
-  const [roomID, setRoomID] = useState("");
-  const [playerID, setPlayerID] = useState("");
-  const [playerScores, setPlayerScores] = useState<{ [id: string]: number }>(); // TODO: Move to parent
+  const [playerScores, setPlayerScores] = useState<{ [id: string]: number }>();
 
   const inputRef = useRef<HTMLInputElement>(null);
   const promptRef = useRef<HTMLHeadingElement>(null);
@@ -55,6 +65,31 @@ const Game = ({
     const num = Math.floor(Math.random() * 1000);
     setNumber(num);
     setPrompt(numToString(num, locale));
+  };
+
+  const selectOption = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    setLanguage(e.currentTarget.innerText);
+    setLocale(e.currentTarget.id);
+    setLanguageMenuOpen(false);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isTiming) {
+      setIsTiming(true);
+      const id = setInterval(() => {
+        setSeconds((prev) => prev - 1);
+      }, 1000);
+
+      setTimeout(() => {
+        clearInterval(id);
+        setIsTiming(false);
+        setSeconds(seconds);
+        setIsCompleted(true);
+        ROOM?.send("end");
+      }, seconds * 1000);
+
+      ROOM?.send("start");
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -79,31 +114,6 @@ const Game = ({
     }
   };
 
-  const selectOption = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    setLanguage(e.currentTarget.innerText);
-    setLocale(e.currentTarget.id);
-    setLanguageMenuOpen(false);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!isTiming) {
-      setIsTiming(true);
-      const id = setInterval(() => {
-        setSeconds((prev) => prev - 1);
-      }, 1000);
-
-      setTimeout(() => {
-        clearInterval(id);
-        setIsTiming(false);
-        setSeconds(seconds);
-        setIsCompleted(true);
-        // TODO: handle ROOM "end" event
-      }, seconds * 1000);
-
-      ROOM?.send("start");
-    }
-  };
-
   const joinRoom = () => {
     CLIENT.joinOrCreate("my_room")
       .then((room) => {
@@ -123,6 +133,12 @@ const Game = ({
             [res.id]: res.solved,
           }));
         });
+        room.onMessage("final", (res: { id: string; solved: number }) => {
+          setFinalScores((prev) => ({
+            ...prev,
+            [res.id]: res.solved,
+          }));
+        });
         ROOM = room;
       })
       .catch((e) => {
@@ -131,6 +147,7 @@ const Game = ({
   };
 
   const leaveRoom = () => {
+    console.log(ROOM);
     ROOM?.leave();
     setRoomID("");
     setPlayerScores(undefined);
@@ -199,21 +216,11 @@ const Game = ({
       )}
 
       {playerScores && (
-        <div className="mt-20 flex flex-col items-center text-xl text-text-accent">
-          <h1>Leaderboard</h1>
-          {playerScores && (
-            <ul>
-              {Object.entries(playerScores)
-                .sort((a, b) => b[1] - a[1])
-                .map(([id, score]) => (
-                  <li key={id}>
-                    {id} {id === playerID && " (You)"}: {score}
-                  </li>
-                ))}
-            </ul>
-          )}
-          <h1 className="mt-5 text-sm text-text-accent">Room ID: {roomID}</h1>
-        </div>
+        <Leaderboard
+          roomID={roomID}
+          playerID={playerID}
+          playerScores={playerScores}
+        />
       )}
     </>
   );

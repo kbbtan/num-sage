@@ -1,27 +1,38 @@
 import { useRouter } from "next/navigation";
 
 import { isEmpty } from "@/utils/helper";
+import Leaderboard from "./Leaderboard";
 
 type ResultsProps = {
   correct: number;
   incorrect: { [prompt: string]: number };
   attempted: number;
+  roomID: string;
+  playerID: string;
+  finalScores: { [id: string]: number };
   setCorrect: React.Dispatch<React.SetStateAction<number>>;
   setIsCompleted: React.Dispatch<React.SetStateAction<boolean>>;
   setAttempted: React.Dispatch<React.SetStateAction<number>>;
   setIncorrect: React.Dispatch<
     React.SetStateAction<{ [prompt: string]: number }>
   >;
+  setFinalScores: React.Dispatch<
+    React.SetStateAction<{ [id: string]: number }>
+  >;
 };
 
 const Results = ({
   correct,
-  attempted,
   incorrect,
+  attempted,
+  roomID,
+  playerID,
+  finalScores,
   setCorrect,
   setIsCompleted,
   setAttempted,
   setIncorrect,
+  setFinalScores,
 }: ResultsProps) => {
   const router = useRouter();
 
@@ -60,12 +71,20 @@ const Results = ({
           </ol>
         </div>
       </div>
+      {!isEmpty(finalScores) && (
+        <Leaderboard
+          roomID={roomID}
+          playerID={playerID}
+          playerScores={finalScores}
+        />
+      )}
       <button
         onClick={() => {
           setCorrect(0);
           setAttempted(0);
           setIsCompleted(false);
           setIncorrect({});
+          setFinalScores({});
           router.push("/");
         }}
         className="mt-4 rounded border border-sub-color px-5 py-1 text-xl text-sub-color hover:border-text-accent hover:text-text-accent"

@@ -17,6 +17,13 @@ export class MyRoom extends Room<MyRoomState> {
     this.onMessage("start", (client, message) => {
       this.lock();
     });
+    this.onMessage("end", (client, message) => {
+      const player = this.state.players.get(client.sessionId);
+      this.broadcast("final", {
+        id: client.sessionId,
+        solved: player.solved,
+      });
+    });
   }
 
   onJoin(client: Client, options: any) {
