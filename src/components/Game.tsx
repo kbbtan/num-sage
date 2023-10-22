@@ -13,18 +13,30 @@ import { CLIENT } from "@/utils/multiplayer";
 import { numToString } from "@/utils/numberConverter";
 
 type GameProps = {
-  setCompleted: React.Dispatch<React.SetStateAction<boolean>>;
+  counter: number;
+  setCounter: React.Dispatch<React.SetStateAction<number>>;
+  setIncorrect: React.Dispatch<
+    React.SetStateAction<{ [prompt: string]: number }>
+  >;
+  setIsCompleted: React.Dispatch<React.SetStateAction<boolean>>;
+  setAttempted: React.Dispatch<React.SetStateAction<number>>;
 };
 
 let ROOM: Colyseus.Room;
 
-const Game = ({ setCompleted }: GameProps) => {
+const Game = ({
+  counter,
+  setCounter,
+  setIncorrect,
+  setAttempted,
+  setIsCompleted,
+}: GameProps) => {
   const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const [locale, setLocale] = useState(DEFAULT_LOCALE);
   const [number, setNumber] = useState(0);
   const [prompt, setPrompt] = useState("");
-  const [counter, setCounter] = useState(0);
+
   const [seconds, setSeconds] = useState(DEFAULT_TIMEOUT);
   const [isTiming, setIsTiming] = useState(false);
   const [roomID, setRoomID] = useState("");
@@ -54,10 +66,15 @@ const Game = ({ setCompleted }: GameProps) => {
         generatePrompt(locale);
       } else {
         promptRef.current!.style.color = "red";
+        setIncorrect((prev) => ({
+          ...prev,
+          [prompt]: (prev[prompt] || 0) + 1,
+        }));
         setTimeout(() => {
           promptRef.current!.style.color = "white";
         }, 500);
       }
+      setAttempted((prev) => prev + 1);
     }
   };
 
@@ -78,7 +95,7 @@ const Game = ({ setCompleted }: GameProps) => {
         clearInterval(id);
         setIsTiming(false);
         setSeconds(seconds);
-        setCompleted(true);
+        setIsCompleted(true);
       }, seconds * 1000);
 
       ROOM?.send("start");
@@ -161,7 +178,7 @@ const Game = ({ setCompleted }: GameProps) => {
                 "
       />
 
-      {roomID ? (
+      {isTiming ? null : roomID ? (
         <button
           onClick={leaveRoom}
           className=" m-3 rounded-md px-3 py-2 text-2xl font-medium text-sub-color hover:bg-sub-color hover:text-accent"
@@ -170,15 +187,13 @@ const Game = ({ setCompleted }: GameProps) => {
           Leave
         </button>
       ) : (
-        !isTiming && (
-          <button
-            onClick={joinRoom}
-            className=" m-3 rounded-md px-3 py-2 text-2xl font-medium text-sub-color hover:bg-sub-color hover:text-accent"
-            aria-current="page"
-          >
-            Join Multiplayer
-          </button>
-        )
+        <button
+          onClick={joinRoom}
+          className=" m-3 rounded-md px-3 py-2 text-2xl font-medium text-sub-color hover:bg-sub-color hover:text-accent"
+          aria-current="page"
+        >
+          Join Multiplayer
+        </button>
       )}
 
       {playerScores && (
