@@ -15,20 +15,6 @@ const Navbar = () => {
               <a
                 href="#"
                 className="rounded-md px-3 py-2 text-2xl font-medium text-sub-color hover:bg-sub-color hover:text-accent"
-                aria-current="page"
-              >
-                Create
-              </a>
-              <a
-                href="#"
-                className="rounded-md px-3 py-2 text-2xl font-medium text-sub-color hover:bg-sub-color hover:text-accent"
-                aria-current="page"
-              >
-                Join
-              </a>
-              <a
-                href="#"
-                className="rounded-md px-3 py-2 text-2xl font-medium text-sub-color hover:bg-sub-color hover:text-accent"
               >
                 Learn
               </a>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import * as Colyseus from "colyseus.js";
 
 import LanguageMenu from "./components/LanguageMenu";
 import { numToString } from "@/utils/numberConverter";
@@ -8,6 +9,8 @@ import { numToString } from "@/utils/numberConverter";
 const DEFAULT_LANGUAGE = "English";
 const DEFAULT_LOCALE = "en";
 const DEFAULT_TIMEOUT = 60;
+let CLIENT = new Colyseus.Client("ws://localhost:2567");
+let ROOM: Colyseus.Room;
 
 const Home = () => {
   const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
@@ -18,6 +21,7 @@ const Home = () => {
   const [number, setNumber] = useState(0);
   const [prompt, setPrompt] = useState("");
   const [counter, setCounter] = useState(0);
+  const [roomID, setRoomID] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const promptRef = useRef<HTMLHeadingElement>(null);
 
@@ -59,6 +63,7 @@ const Home = () => {
         setCounter((prev) => prev + 1);
         generatePrompt(locale);
         inputRef.current!.value = "";
+        ROOM.send("solve");
       } else {
         promptRef.current!.style.color = "red";
         setTimeout(() => {
@@ -73,6 +78,22 @@ const Home = () => {
     setSeconds(DEFAULT_TIMEOUT);
     generatePrompt(locale);
     inputRef.current!.value = "";
+    if (ROOM) {
+      ROOM.leave();
+    }
+    setRoomID("");
+  };
+
+  const joinRoom = () => {
+    CLIENT.joinOrCreate("my_room")
+      .then((room) => {
+        setRoomID(room.roomId);
+        ROOM = room;
+        console.log(room.sessionId, "joined", room.name);
+      })
+      .catch((e) => {
+        console.log("JOIN ERROR", e);
+      });
   };
 
   return (
@@ -127,6 +148,17 @@ const Home = () => {
         >
           Restart
         </button>
+        {roomID ? (
+          <h1 className="mt-4 text-xl text-text-accent">Room ID: {roomID}</h1>
+        ) : (
+          <button
+            onClick={joinRoom}
+            className=" m-3 rounded-md px-3 py-2 text-2xl font-medium text-sub-color hover:bg-sub-color hover:text-accent"
+            aria-current="page"
+          >
+            Join Multiplayer
+          </button>
+        )}
       </div>
     </div>
   );
