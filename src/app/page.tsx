@@ -9,7 +9,7 @@ import { numToString } from "@/utils/numberConverter";
 const DEFAULT_LANGUAGE = "English";
 const DEFAULT_LOCALE = "en";
 const DEFAULT_TIMEOUT = 60;
-let CLIENT = new Colyseus.Client("ws://localhost:2567");
+const CLIENT = new Colyseus.Client("ws://localhost:2567");
 let ROOM: Colyseus.Room;
 
 const Home = () => {
@@ -22,6 +22,8 @@ const Home = () => {
   const [prompt, setPrompt] = useState("");
   const [counter, setCounter] = useState(0);
   const [roomID, setRoomID] = useState("");
+  const [playerID, setPlayerID] = useState("");
+  const [playerScores, setPlayerScores] = useState<{ [id: string]: number }>();
   const inputRef = useRef<HTMLInputElement>(null);
   const promptRef = useRef<HTMLHeadingElement>(null);
 
@@ -52,7 +54,10 @@ const Home = () => {
         clearInterval(id);
         setTimer(false);
         setSeconds(seconds);
+        // TODO: Change state when time is up
       }, seconds * 1000);
+
+      ROOM?.send("start");
     }
   };
 
@@ -60,10 +65,10 @@ const Home = () => {
     if (e.key === "Enter") {
       const inputNumber = parseInt(inputRef.current!.value);
       if (inputNumber === number) {
+        ROOM?.send("solve");
+        inputRef.current!.value = "";
         setCounter((prev) => prev + 1);
         generatePrompt(locale);
-        inputRef.current!.value = "";
-        ROOM.send("solve");
       } else {
         promptRef.current!.style.color = "red";
         setTimeout(() => {
@@ -77,19 +82,32 @@ const Home = () => {
     setTimer(false);
     setSeconds(DEFAULT_TIMEOUT);
     generatePrompt(locale);
-    inputRef.current!.value = "";
-    if (ROOM) {
-      ROOM.leave();
-    }
+    ROOM?.leave();
     setRoomID("");
+    setPlayerScores(undefined);
+    inputRef.current!.value = "";
   };
 
   const joinRoom = () => {
     CLIENT.joinOrCreate("my_room")
       .then((room) => {
-        setRoomID(room.roomId);
         ROOM = room;
-        console.log(room.sessionId, "joined", room.name);
+        console.log(ROOM.sessionId, "joined", ROOM.name);
+        setRoomID(ROOM.roomId);
+        setPlayerID(ROOM.sessionId);
+        ROOM.onMessage("players", (res: IterableIterator<string>) => {
+          setPlayerScores(
+            Object.fromEntries(
+              Array.from(res).map((playerID) => [playerID, 0]),
+            ),
+          );
+        });
+        ROOM.onMessage("update", (res: { id: string; solved: number }) => {
+          setPlayerScores((prev) => ({
+            ...prev,
+            [res.id]: res.solved,
+          }));
+        });
       })
       .catch((e) => {
         console.log("JOIN ERROR", e);
@@ -97,7 +115,7 @@ const Home = () => {
   };
 
   return (
-    <div className="flex h-[87vh] w-full items-center justify-center">
+    <div className="flex h-[87vh] w-full flex-col items-center justify-center">
       <div className="flex flex-col items-center">
         <div className="relative w-full text-center">
           {timer ? (
@@ -148,9 +166,7 @@ const Home = () => {
         >
           Restart
         </button>
-        {roomID ? (
-          <h1 className="mt-4 text-xl text-text-accent">Room ID: {roomID}</h1>
-        ) : (
+        {!!!roomID && (
           <button
             onClick={joinRoom}
             className=" m-3 rounded-md px-3 py-2 text-2xl font-medium text-sub-color hover:bg-sub-color hover:text-accent"
@@ -160,6 +176,23 @@ const Home = () => {
           </button>
         )}
       </div>
+      {playerScores && (
+        <div className="mt-20 flex flex-col items-center text-xl text-text-accent">
+          <h1>Leaderboard</h1>
+          {playerScores && (
+            <ul>
+              {Object.entries(playerScores)
+                .sort((a, b) => b[1] - a[1])
+                .map(([id, score]) => (
+                  <li key={id}>
+                    {id} {id === playerID && " (You)"}: {score}
+                  </li>
+                ))}
+            </ul>
+          )}
+          <h1 className="mt-5 text-sm text-text-accent">Room ID: {roomID}</h1>
+        </div>
+      )}
     </div>
   );
 };
