@@ -14,6 +14,7 @@ import { isEmpty } from "@/utils/helper";
 import { CLIENT } from "@/utils/multiplayer";
 import { numToString } from "@/utils/numberConverter";
 import { useAppStore } from "@/utils/store";
+import LoadingButton from "./LoadingButton";
 
 let ROOM: Colyseus.Room;
 
@@ -32,8 +33,10 @@ const Game = () => {
     roomID,
     playerScores,
     finalScores,
+    communicating,
     incrementCounter,
     updateIncorrect,
+    setCommunicating,
     setIsCompleted,
     incrementAttempted,
     setRoomID,
@@ -107,48 +110,45 @@ const Game = () => {
     }
   };
 
-  const joinRoom = () => {
-    CLIENT.joinOrCreate("my_room")
-      .then((room) => {
-        console.log(room.sessionId, "joined", room.name);
-        setRoomID(room.roomId);
-        setPlayerID(room.sessionId);
+  const joinRoom = async () => {
+    setCommunicating(true);
+    try {
+      ROOM = (await CLIENT.joinOrCreate("my_room")) as Colyseus.Room;
+      console.log(ROOM.sessionId, "joined", ROOM.name);
+      setRoomID(ROOM.roomId);
+      setPlayerID(ROOM.sessionId);
 
-        room.onMessage("players", (res: IterableIterator<string>) => {
-          setPlayerScores(
-            Object.fromEntries(
-              Array.from(res).map((playerID) => [playerID, 0]),
-            ),
-          );
-          setFinalScores(
-            Object.fromEntries(
-              Array.from(res).map((playerID) => [playerID, -1]),
-            ),
-          );
-        });
-        room.onMessage("update", (res: { id: string; solved: number }) => {
-          updatePlayerScores((prev) => ({
-            ...prev,
-            [res.id]: res.solved,
-          }));
-        });
-        room.onMessage("final", (res: { id: string; solved: number }) => {
-          updateFinalScores((prev) => ({
-            ...prev,
-            [res.id]: res.solved,
-          }));
-          if (Object.values(finalScores).every((score) => score !== -1))
-            room.send("unlock");
-        });
-        ROOM = room;
-      })
-      .catch((e) => {
-        console.log("JOIN ERROR", e);
+      ROOM.onMessage("players", (res: IterableIterator<string>) => {
+        setPlayerScores(
+          Object.fromEntries(Array.from(res).map((playerID) => [playerID, 0])),
+        );
+        setFinalScores(
+          Object.fromEntries(Array.from(res).map((playerID) => [playerID, -1])),
+        );
       });
+      ROOM.onMessage("update", (res: { id: string; solved: number }) => {
+        updatePlayerScores((prev) => ({
+          ...prev,
+          [res.id]: res.solved,
+        }));
+      });
+      ROOM.onMessage("final", (res: { id: string; solved: number }) => {
+        updateFinalScores((prev) => ({
+          ...prev,
+          [res.id]: res.solved,
+        }));
+        if (Object.values(finalScores).every((score) => score !== -1))
+          ROOM.send("unlock");
+      });
+    } catch (e) {
+      console.log("JOIN ERROR", e);
+    }
+
+    setCommunicating(false);
   };
 
   const leaveRoom = () => {
-    ROOM?.leave();
+    ROOM.leave();
     setRoomID("");
     setPlayerScores({});
   };
@@ -197,7 +197,9 @@ const Game = () => {
                 "
       />
 
-      {isTiming ? null : roomID ? (
+      {isTiming ? null : communicating ? (
+        <LoadingButton />
+      ) : roomID ? (
         <button
           onClick={leaveRoom}
           className=" m-3 rounded-md px-3 py-2 text-2xl font-medium text-sub-color hover:bg-sub-color hover:text-accent"
@@ -208,7 +210,7 @@ const Game = () => {
       ) : (
         <button
           onClick={joinRoom}
-          className=" m-3 rounded-md px-3 py-2 text-2xl font-medium text-sub-color hover:bg-sub-color hover:text-accent"
+          className="m-3 rounded-md px-3 py-2 text-2xl font-medium text-sub-color hover:bg-sub-color hover:text-accent"
           aria-current="page"
         >
           Join Multiplayer

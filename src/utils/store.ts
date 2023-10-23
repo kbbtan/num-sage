@@ -5,6 +5,7 @@ interface AppState {
   attempted: number;
   incorrect: { [prompt: string]: number };
   isCompleted: boolean;
+  communicating: boolean;
   roomID: string;
   playerID: string;
   playerScores: { [id: string]: number };
@@ -17,6 +18,7 @@ interface AppState {
     fn: (prev: { [prompt: string]: number }) => { [prompt: string]: number },
   ) => void;
   resetIncorrect: () => void;
+  setCommunicating: (communicating: boolean) => void;
   setIsCompleted: (isCompleted: boolean) => void;
   setRoomID: (roomID: string) => void;
   setPlayerID: (playerID: string) => void;
@@ -45,6 +47,9 @@ export const useAppStore = create<AppState>((set) => ({
     fn: (prev: { [prompt: string]: number }) => { [prompt: string]: number },
   ) => set((state) => ({ incorrect: fn(state.incorrect) })),
   resetIncorrect: () => set({ incorrect: {} }),
+
+  communicating: false,
+  setCommunicating: (communicating: boolean) => set({ communicating }),
 
   isCompleted: false,
   setIsCompleted: (isCompleted: boolean) => set({ isCompleted }),
