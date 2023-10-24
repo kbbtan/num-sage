@@ -17,6 +17,10 @@ export default function RootLayout({
       <body className="bg-bg-color">
         <Navbar />
         {children}
+        <script
+          async
+          src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.8.1/flowbite.min.js"
+        />
       </body>
     </html>
   );

@@ -53,8 +53,10 @@ export const useAppStore = create<AppState>((set) => ({
 
   isCompleted: false,
   setIsCompleted: (isCompleted: boolean) => set({ isCompleted }),
+
   roomID: "",
   setRoomID: (roomID: string) => set({ roomID }),
+  
   playerID: "",
   setPlayerID: (playerID: string) => set({ playerID }),
 
