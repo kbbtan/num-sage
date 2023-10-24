@@ -5,50 +5,34 @@ type LanguageMenuProps = {
 };
 
 const LanguageMenu = ({ selectOption }: LanguageMenuProps) => {
+  const languageCodes = {
+    English: "en",
+    "Chinese (Simplified)": "zh",
+    Spanish: "es",
+    French: "fr",
+    Arabic: "ar",
+    Russian: "ru",
+    Portugese: "pt",
+    Indonesian: "id",
+    German: "de",
+    "Japanese (Kanji)": "ja",
+    "Korean (Sino)": "ko",
+  };
+
   return (
     <div className="absolute mt-3 flex w-full flex-col rounded border border-sub-color text-2xl">
-      <a
-        className="cursor-pointer bg-sub-color py-1 hover:text-white"
-        id="en"
-        onClick={selectOption}
-      >
-        English
-      </a>
-      <a
-        className="cursor-pointer bg-bg-color py-1 hover:text-white"
-        id="es"
-        onClick={selectOption}
-      >
-        Spanish
-      </a>
-      <a
-        className="cursor-pointer bg-sub-color py-1 hover:text-white"
-        onClick={selectOption}
-        id="zh"
-      >
-        Chinese (Simplified)
-      </a>
-      <a
-        className="cursor-pointer bg-bg-color py-1 hover:text-white"
-        onClick={selectOption}
-        id="ko"
-      >
-        Korean (Sino-Korean)
-      </a>
-      <a
-        className="cursor-pointer bg-sub-color py-1 hover:text-white"
-        onClick={selectOption}
-        id="fr"
-      >
-        French
-      </a>
-      <a
-        className="cursor-pointer bg-bg-color py-1 hover:text-white"
-        onClick={selectOption}
-        id="ru"
-      >
-        Russian
-      </a>
+      {Object.entries(languageCodes).map(([language, code], i) => (
+        <a
+          key={i}
+          id={code}
+          className={`cursor-pointer py-1 hover:text-white ${
+            i % 2 ? "bg-bg-color" : " bg-sub-color"
+          }`}
+          onClick={selectOption}
+        >
+          {language}
+        </a>
+      ))}
     </div>
   );
 };

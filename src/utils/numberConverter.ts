@@ -1,9 +1,12 @@
 import n2words from "n2words";
+import { number2kanji } from "@geolonia/japanese-numeral";
 
 export const numToString = (n: number, locale: string): string => {
   switch (locale) {
     case "zh":
       return convertChinese(n);
+    case "ja":
+      return number2kanji(n);
     default:
       return n2words(n, { lang: locale });
   }

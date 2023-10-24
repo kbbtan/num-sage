@@ -2,9 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import * as Colyseus from "colyseus.js";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import LanguageMenu from "./LanguageMenu";
 import Leaderboard from "./Leaderboard";
+import LoadingButton from "./LoadingButton";
 import {
   DEFAULT_LANGUAGE,
   DEFAULT_LOCALE,
@@ -14,7 +17,6 @@ import { isEmpty } from "@/utils/helper";
 import { CLIENT } from "@/utils/multiplayer";
 import { numToString } from "@/utils/numberConverter";
 import { useAppStore } from "@/utils/store";
-import LoadingButton from "./LoadingButton";
 
 let ROOM: Colyseus.Room;
 
@@ -142,6 +144,10 @@ const Game = () => {
       });
     } catch (e) {
       console.log("JOIN ERROR", e);
+      toast.error("Unable to join. Please try again later.", {
+        position: "bottom-center",
+        autoClose: 2500,
+      });
     }
 
     setCommunicating(false);
@@ -163,15 +169,28 @@ const Game = () => {
           </>
         ) : (
           <button
-            className={`
-                        bg-transparent text-center text-3xl
-                        text-sub-color
-                        hover:cursor-pointer hover:text-text-accent
-                        ${languageMenuOpen && "text-text-accent"}
-                    `}
+            className={`inline-flex items-center bg-transparent
+                        text-2xl text-sub-color first-letter:text-center 
+                        hover:cursor-pointer hover:text-text-accent sm:text-3xl
+                        ${languageMenuOpen && "text-text-accent"}`}
             onClick={() => setLanguageMenuOpen(!languageMenuOpen)}
           >
             {language}
+            <svg
+              className="ml-2.5 h-2.5 w-2.5"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 10 6"
+            >
+              <path
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="m1 1 4 4 4-4"
+              />
+            </svg>
           </button>
         )}
 
@@ -179,7 +198,7 @@ const Game = () => {
       </div>
       <h1
         ref={promptRef}
-        className="my-10 text-7xl font-medium text-text-accent"
+        className="my-10 text-center text-3xl font-medium text-text-accent md:text-5xl lg:text-7xl"
       >
         {prompt}
       </h1>
@@ -202,7 +221,7 @@ const Game = () => {
       ) : roomID ? (
         <button
           onClick={leaveRoom}
-          className=" m-3 rounded-md px-3 py-2 text-2xl font-medium text-sub-color hover:bg-sub-color hover:text-accent"
+          className=" m-3 rounded-md px-3 py-2 text-xl font-medium text-sub-color hover:bg-sub-color hover:text-accent sm:text-2xl"
           aria-current="page"
         >
           Leave
@@ -210,7 +229,7 @@ const Game = () => {
       ) : (
         <button
           onClick={joinRoom}
-          className="m-3 rounded-md px-3 py-2 text-2xl font-medium text-sub-color hover:bg-sub-color hover:text-accent"
+          className="m-3 rounded-md px-3 py-2 text-xl font-medium text-sub-color hover:bg-sub-color hover:text-accent sm:text-2xl"
           aria-current="page"
         >
           Join Multiplayer
@@ -218,6 +237,8 @@ const Game = () => {
       )}
 
       {!isEmpty(playerScores) && <Leaderboard final={false} />}
+
+      <ToastContainer />
     </>
   );
 };
