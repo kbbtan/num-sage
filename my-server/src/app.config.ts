@@ -12,7 +12,22 @@ export default config({
     /**
      * Define your room handlers:
      */
-    gameServer.define("my_room", MyRoom);
+    const rooms = [
+      "en",
+      "zh",
+      "es",
+      "fr",
+      "ar",
+      "ru",
+      "pt",
+      "id",
+      "de",
+      "ja",
+      "ko",
+    ];
+    for (const room of rooms) {
+      gameServer.define(room, MyRoom, { lang: room });
+    }
   },
 
   initializeExpress: (app) => {
