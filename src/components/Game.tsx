@@ -115,7 +115,7 @@ const Game = () => {
   const joinRoom = async () => {
     setCommunicating(true);
     try {
-      ROOM = (await CLIENT.joinOrCreate("my_room")) as Colyseus.Room;
+      ROOM = (await CLIENT.joinOrCreate(locale)) as Colyseus.Room;
       console.log(ROOM.sessionId, "joined", ROOM.name);
       setRoomID(ROOM.roomId);
       setPlayerID(ROOM.sessionId);
@@ -167,11 +167,11 @@ const Game = () => {
             <h1 className="text-3xl text-green-900">{counter}</h1>
             <h1 className="text-5xl text-sub-color">{seconds}</h1>
           </>
-        ) : (
+        ) : !roomID ? (
           <button
-            className={`inline-flex items-center bg-transparent
-                        text-2xl text-sub-color first-letter:text-center 
-                        hover:cursor-pointer hover:text-text-accent sm:text-3xl
+            className={`inline-flex items-center text-2xl text-sub-color
+                      first-letter:text-center hover:cursor-pointer 
+                      hover:text-text-accent sm:text-3xl
                         ${languageMenuOpen && "text-text-accent"}`}
             onClick={() => setLanguageMenuOpen(!languageMenuOpen)}
           >
@@ -192,6 +192,8 @@ const Game = () => {
               />
             </svg>
           </button>
+        ) : (
+          <h1 className="text-2xl text-accent sm:text-3xl">{language}</h1>
         )}
 
         {languageMenuOpen && <LanguageMenu selectOption={selectOption} />}
