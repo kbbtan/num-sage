@@ -2,7 +2,7 @@ import { create } from "zustand";
 import * as Colyseus from "colyseus.js";
 
 interface AppState {
-  counter: number;
+  solved: number;
   attempted: number;
   incorrect: { [prompt: string]: number };
   isCompleted: boolean;
@@ -10,8 +10,8 @@ interface AppState {
   gameRoom: Colyseus.Room | null;
   playerScores: { [id: string]: number };
   finalScores: { [id: string]: number };
-  incrementCounter: () => void;
-  resetCounter: () => void;
+  incrementSolved: () => void;
+  resetSolved: () => void;
   incrementAttempted: () => void;
   resetAttempted: () => void;
   updateIncorrect: (
@@ -32,9 +32,9 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  counter: 0,
-  incrementCounter: () => set((state) => ({ counter: state.counter + 1 })),
-  resetCounter: () => set({ counter: 0 }),
+  solved: 0,
+  incrementSolved: () => set((state) => ({ solved: state.solved + 1 })),
+  resetSolved: () => set({ solved: 0 }),
 
   attempted: 0,
   incrementAttempted: () =>

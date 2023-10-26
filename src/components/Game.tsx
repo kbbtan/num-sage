@@ -32,12 +32,12 @@ const Game = () => {
   const [isTiming, setIsTiming] = useState(false);
 
   const {
-    counter,
+    solved,
     gameRoom,
     playerScores,
     finalScores,
     communicating,
-    incrementCounter,
+    incrementSolved,
     updateIncorrect,
     setCommunicating,
     setIsCompleted,
@@ -96,7 +96,7 @@ const Game = () => {
       if (inputNumber === number) {
         gameRoom?.send("solve");
         inputRef.current!.value = "";
-        incrementCounter();
+        incrementSolved();
         generatePrompt(locale);
       } else {
         promptRef.current!.style.color = "red";
@@ -128,13 +128,9 @@ const Game = () => {
   };
 
   const setRoomCallbacks = () => {
-    ROOM.onMessage("players", (res: IterableIterator<string>) => {
-      setPlayerScores(
-        Object.fromEntries(Array.from(res).map((playerID) => [playerID, 0])),
-      );
-      setFinalScores(
-        Object.fromEntries(Array.from(res).map((playerID) => [playerID, -1])),
-      );
+    ROOM.onMessage("players", (res: string[]) => {
+      setPlayerScores(Object.fromEntries(res.map((playerID) => [playerID, 0])));
+      setFinalScores(Object.fromEntries(res.map((playerID) => [playerID, -1])));
     });
     ROOM.onMessage("update", (res: { id: string; solved: number }) => {
       updatePlayerScores((prev) => ({
@@ -190,7 +186,7 @@ const Game = () => {
       <div className="relative w-full text-center">
         {isTiming ? (
           <>
-            <h1 className="text-3xl text-green-900">{counter}</h1>
+            <h1 className="text-3xl text-green-900">{solved}</h1>
             <h1 className="text-5xl text-sub-color">{seconds}</h1>
           </>
         ) : gameRoom ? (

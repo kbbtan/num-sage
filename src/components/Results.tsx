@@ -4,11 +4,11 @@ import { useAppStore } from "@/utils/store";
 
 const Results = () => {
   const {
-    counter,
+    solved,
     incorrect,
     attempted,
     finalScores,
-    resetCounter,
+    resetSolved,
     resetIncorrect,
     setIsCompleted,
     resetAttempted,
@@ -21,7 +21,7 @@ const Results = () => {
         <div>
           <h2 className="text-2xl text-text-accent">Accuracy:</h2>
           <h1 className="text-7xl text-accent">
-            {Math.floor((counter / attempted) * 100)}%
+            {Math.floor((solved / attempted) * 100)}%
           </h1>
         </div>
 
@@ -53,7 +53,7 @@ const Results = () => {
       {!isEmpty(finalScores) && <Leaderboard final />}
       <button
         onClick={() => {
-          resetCounter();
+          resetSolved();
           resetAttempted();
           resetIncorrect();
           setFinalScores({});
