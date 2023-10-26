@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import * as Colyseus from "colyseus.js";
 
 interface AppState {
   counter: number;
@@ -6,8 +7,7 @@ interface AppState {
   incorrect: { [prompt: string]: number };
   isCompleted: boolean;
   communicating: boolean;
-  roomID: string;
-  playerID: string;
+  gameRoom: Colyseus.Room | null;
   playerScores: { [id: string]: number };
   finalScores: { [id: string]: number };
   incrementCounter: () => void;
@@ -18,10 +18,9 @@ interface AppState {
     fn: (prev: { [prompt: string]: number }) => { [prompt: string]: number },
   ) => void;
   resetIncorrect: () => void;
-  setCommunicating: (communicating: boolean) => void;
   setIsCompleted: (isCompleted: boolean) => void;
-  setRoomID: (roomID: string) => void;
-  setPlayerID: (playerID: string) => void;
+  setCommunicating: (communicating: boolean) => void;
+  setGameRoom: (room: Colyseus.Room | null) => void;
   updatePlayerScores: (
     fn: (prev: { [id: string]: number }) => { [id: string]: number },
   ) => void;
@@ -48,17 +47,14 @@ export const useAppStore = create<AppState>((set) => ({
   ) => set((state) => ({ incorrect: fn(state.incorrect) })),
   resetIncorrect: () => set({ incorrect: {} }),
 
-  communicating: false,
-  setCommunicating: (communicating: boolean) => set({ communicating }),
-
   isCompleted: false,
   setIsCompleted: (isCompleted: boolean) => set({ isCompleted }),
 
-  roomID: "",
-  setRoomID: (roomID: string) => set({ roomID }),
-  
-  playerID: "",
-  setPlayerID: (playerID: string) => set({ playerID }),
+  communicating: false,
+  setCommunicating: (communicating: boolean) => set({ communicating }),
+
+  gameRoom: null,
+  setGameRoom: (room: Colyseus.Room | null) => set({ gameRoom: room }),
 
   playerScores: {},
   updatePlayerScores: (
