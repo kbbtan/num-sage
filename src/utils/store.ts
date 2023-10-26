@@ -1,27 +1,26 @@
 import { create } from "zustand";
+import * as Colyseus from "colyseus.js";
 
 interface AppState {
-  counter: number;
+  solved: number;
   attempted: number;
   incorrect: { [prompt: string]: number };
   isCompleted: boolean;
   communicating: boolean;
-  roomID: string;
-  playerID: string;
+  gameRoom: Colyseus.Room | null;
   playerScores: { [id: string]: number };
   finalScores: { [id: string]: number };
-  incrementCounter: () => void;
-  resetCounter: () => void;
+  incrementSolved: () => void;
+  resetSolved: () => void;
   incrementAttempted: () => void;
   resetAttempted: () => void;
   updateIncorrect: (
     fn: (prev: { [prompt: string]: number }) => { [prompt: string]: number },
   ) => void;
   resetIncorrect: () => void;
-  setCommunicating: (communicating: boolean) => void;
   setIsCompleted: (isCompleted: boolean) => void;
-  setRoomID: (roomID: string) => void;
-  setPlayerID: (playerID: string) => void;
+  setCommunicating: (communicating: boolean) => void;
+  setGameRoom: (room: Colyseus.Room | null) => void;
   updatePlayerScores: (
     fn: (prev: { [id: string]: number }) => { [id: string]: number },
   ) => void;
@@ -33,9 +32,9 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  counter: 0,
-  incrementCounter: () => set((state) => ({ counter: state.counter + 1 })),
-  resetCounter: () => set({ counter: 0 }),
+  solved: 0,
+  incrementSolved: () => set((state) => ({ solved: state.solved + 1 })),
+  resetSolved: () => set({ solved: 0 }),
 
   attempted: 0,
   incrementAttempted: () =>
@@ -48,17 +47,14 @@ export const useAppStore = create<AppState>((set) => ({
   ) => set((state) => ({ incorrect: fn(state.incorrect) })),
   resetIncorrect: () => set({ incorrect: {} }),
 
-  communicating: false,
-  setCommunicating: (communicating: boolean) => set({ communicating }),
-
   isCompleted: false,
   setIsCompleted: (isCompleted: boolean) => set({ isCompleted }),
 
-  roomID: "",
-  setRoomID: (roomID: string) => set({ roomID }),
-  
-  playerID: "",
-  setPlayerID: (playerID: string) => set({ playerID }),
+  communicating: false,
+  setCommunicating: (communicating: boolean) => set({ communicating }),
+
+  gameRoom: null,
+  setGameRoom: (room: Colyseus.Room | null) => set({ gameRoom: room }),
 
   playerScores: {},
   updatePlayerScores: (

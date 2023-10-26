@@ -12,8 +12,9 @@ import {
   DEFAULT_LANGUAGE,
   DEFAULT_LOCALE,
   DEFAULT_TIMEOUT,
+  WS_CLOSE_ERROR_CODES,
 } from "@/utils/constants";
-import { isEmpty } from "@/utils/helper";
+import { isEmpty, asyncWithTimeout } from "@/utils/helper";
 import { CLIENT } from "@/utils/multiplayer";
 import { numToString } from "@/utils/numberConverter";
 import { useAppStore } from "@/utils/store";
@@ -31,18 +32,17 @@ const Game = () => {
   const [isTiming, setIsTiming] = useState(false);
 
   const {
-    counter,
-    roomID,
+    solved,
+    gameRoom,
     playerScores,
     finalScores,
     communicating,
-    incrementCounter,
+    incrementSolved,
     updateIncorrect,
     setCommunicating,
     setIsCompleted,
     incrementAttempted,
-    setRoomID,
-    setPlayerID,
+    setGameRoom,
     updateFinalScores,
     updatePlayerScores,
     setPlayerScores,
@@ -76,7 +76,7 @@ const Game = () => {
       }, 1000);
 
       setTimeout(() => {
-        ROOM?.send("end");
+        gameRoom?.send("end");
         clearInterval(id);
         setIsTiming(false);
         setSeconds(seconds);
@@ -86,7 +86,7 @@ const Game = () => {
         setIsCompleted(true);
       }, seconds * 1000);
 
-      ROOM?.send("start");
+      gameRoom?.send("start");
     }
   };
 
@@ -94,9 +94,9 @@ const Game = () => {
     if (e.key === "Enter") {
       const inputNumber = parseInt(inputRef.current!.value);
       if (inputNumber === number) {
-        ROOM?.send("solve");
+        gameRoom?.send("solve");
         inputRef.current!.value = "";
-        incrementCounter();
+        incrementSolved();
         generatePrompt(locale);
       } else {
         promptRef.current!.style.color = "red";
@@ -115,48 +115,70 @@ const Game = () => {
   const joinRoom = async () => {
     setCommunicating(true);
     try {
-      ROOM = (await CLIENT.joinOrCreate(locale)) as Colyseus.Room;
+      ROOM = await CLIENT.joinOrCreate(locale);
+      setGameRoom(ROOM);
       console.log(ROOM.sessionId, "joined", ROOM.name);
-      setRoomID(ROOM.roomId);
-      setPlayerID(ROOM.sessionId);
-
-      ROOM.onMessage("players", (res: IterableIterator<string>) => {
-        setPlayerScores(
-          Object.fromEntries(Array.from(res).map((playerID) => [playerID, 0])),
-        );
-        setFinalScores(
-          Object.fromEntries(Array.from(res).map((playerID) => [playerID, -1])),
-        );
-      });
-      ROOM.onMessage("update", (res: { id: string; solved: number }) => {
-        updatePlayerScores((prev) => ({
-          ...prev,
-          [res.id]: res.solved,
-        }));
-      });
-      ROOM.onMessage("final", (res: { id: string; solved: number }) => {
-        updateFinalScores((prev) => ({
-          ...prev,
-          [res.id]: res.solved,
-        }));
-        if (Object.values(finalScores).every((score) => score !== -1))
-          ROOM.send("unlock");
-      });
+      setRoomCallbacks();
     } catch (e) {
-      console.log("JOIN ERROR", e);
-      toast.error("Unable to join. Please try again later.", {
-        position: "bottom-center",
-        autoClose: 2500,
-      });
+      console.error("JOIN ERROR", e);
+      toast.error("Unable to connect. Please try again later.");
+    } finally {
+      setCommunicating(false);
     }
+  };
 
-    setCommunicating(false);
+  const setRoomCallbacks = () => {
+    ROOM.onMessage("players", (res: string[]) => {
+      setPlayerScores(Object.fromEntries(res.map((playerID) => [playerID, 0])));
+      setFinalScores(Object.fromEntries(res.map((playerID) => [playerID, -1])));
+    });
+    ROOM.onMessage("update", (res: { id: string; solved: number }) => {
+      updatePlayerScores((prev) => ({
+        ...prev,
+        [res.id]: res.solved,
+      }));
+    });
+    ROOM.onMessage("final", (res: { id: string; solved: number }) => {
+      updateFinalScores((prev) => ({
+        ...prev,
+        [res.id]: res.solved,
+      }));
+      if (Object.values(finalScores).every((score) => score !== -1))
+        ROOM.send("unlock");
+    });
+
+    ROOM.onLeave(async (code) => {
+      console.log(`${ROOM.sessionId} left with code ${code}`);
+      toast.info("Disconnected.");
+      // handle arbtrary disconnects
+      if (code in WS_CLOSE_ERROR_CODES) {
+        setCommunicating(true);
+        toast.info("Attempting to reconnect...");
+        try {
+          await asyncWithTimeout(
+            CLIENT.reconnect(ROOM.reconnectionToken),
+            2500,
+          );
+          console.log(ROOM.sessionId, "rejoined", ROOM.name);
+          toast.success("Reconnected!");
+          setCommunicating(false);
+          return;
+        } catch (e) {
+          console.error("RECONNECT ERROR", e);
+          toast.error("Unable to reconnect.");
+        }
+        setCommunicating(false);
+      }
+      setGameRoom(null);
+      setPlayerScores({});
+    });
+    ROOM.onError((code, message) => {
+      console.error(`error occurred with code ${code}:`, message);
+    });
   };
 
   const leaveRoom = () => {
-    ROOM.leave();
-    setRoomID("");
-    setPlayerScores({});
+    gameRoom?.leave(); // onLeave callback will be invoked
   };
 
   return (
@@ -164,10 +186,12 @@ const Game = () => {
       <div className="relative w-full text-center">
         {isTiming ? (
           <>
-            <h1 className="text-3xl text-green-900">{counter}</h1>
+            <h1 className="text-3xl text-green-900">{solved}</h1>
             <h1 className="text-5xl text-sub-color">{seconds}</h1>
           </>
-        ) : !roomID ? (
+        ) : gameRoom ? (
+          <h1 className="text-2xl text-accent sm:text-3xl">{language}</h1>
+        ) : (
           <button
             className={`inline-flex items-center text-2xl text-sub-color
                       first-letter:text-center hover:cursor-pointer 
@@ -192,8 +216,6 @@ const Game = () => {
               />
             </svg>
           </button>
-        ) : (
-          <h1 className="text-2xl text-accent sm:text-3xl">{language}</h1>
         )}
 
         {languageMenuOpen && <LanguageMenu selectOption={selectOption} />}
@@ -218,9 +240,9 @@ const Game = () => {
                 "
       />
 
-      {isTiming ? null : communicating ? (
+      {communicating ? (
         <LoadingButton />
-      ) : roomID ? (
+      ) : isTiming ? null : gameRoom ? (
         <button
           onClick={leaveRoom}
           className=" m-3 rounded-md px-3 py-2 text-xl font-medium text-sub-color hover:bg-sub-color hover:text-accent sm:text-2xl"
@@ -240,7 +262,11 @@ const Game = () => {
 
       {!isEmpty(playerScores) && <Leaderboard final={false} />}
 
-      <ToastContainer />
+      <ToastContainer
+        position="bottom-center"
+        hideProgressBar
+        autoClose={300}
+      />
     </>
   );
 };
