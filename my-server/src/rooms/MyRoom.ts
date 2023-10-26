@@ -35,10 +35,27 @@ export class MyRoom extends Room<MyRoomState> {
     this.broadcast("players", Array.from(this.state.players.keys()));
   }
 
-  onLeave(client: Client, consented: boolean) {
-    this.state.players.delete(client.sessionId);
-    this.broadcast("players", Array.from(this.state.players.keys()));
+  async onLeave(client: Client, consented: boolean) {
     console.log(client.sessionId, "left!");
+    const playerIDs = Array.from(this.state.players.keys());
+    this.broadcast(
+      "players",
+      playerIDs.filter((id) => id !== client.sessionId),
+    );
+    try {
+      if (consented) {
+        throw new Error("consented leave");
+      }
+      // allow disconnected client to reconnect into this room until 20 seconds
+      await this.allowReconnection(client, 20);
+      // client returned! broadcast changes.
+      console.log(client.sessionId, "reconnected!");
+      this.broadcast("players", playerIDs);
+    } catch (e) {
+    } finally {
+      // 20 seconds expired. let's remove the client.
+      this.state.players.delete(client.sessionId);
+    }
   }
 
   onDispose() {

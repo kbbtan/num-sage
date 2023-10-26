@@ -32,7 +32,7 @@ const Game = () => {
 
   const {
     counter,
-    roomID,
+    gameRoom,
     playerScores,
     finalScores,
     communicating,
@@ -41,8 +41,7 @@ const Game = () => {
     setCommunicating,
     setIsCompleted,
     incrementAttempted,
-    setRoomID,
-    setPlayerID,
+    setGameRoom,
     updateFinalScores,
     updatePlayerScores,
     setPlayerScores,
@@ -76,7 +75,7 @@ const Game = () => {
       }, 1000);
 
       setTimeout(() => {
-        ROOM?.send("end");
+        gameRoom?.send("end");
         clearInterval(id);
         setIsTiming(false);
         setSeconds(seconds);
@@ -86,7 +85,7 @@ const Game = () => {
         setIsCompleted(true);
       }, seconds * 1000);
 
-      ROOM?.send("start");
+      gameRoom?.send("start");
     }
   };
 
@@ -94,7 +93,7 @@ const Game = () => {
     if (e.key === "Enter") {
       const inputNumber = parseInt(inputRef.current!.value);
       if (inputNumber === number) {
-        ROOM?.send("solve");
+        gameRoom?.send("solve");
         inputRef.current!.value = "";
         incrementCounter();
         generatePrompt(locale);
@@ -115,10 +114,9 @@ const Game = () => {
   const joinRoom = async () => {
     setCommunicating(true);
     try {
-      ROOM = (await CLIENT.joinOrCreate(locale)) as Colyseus.Room;
+      ROOM = await CLIENT.joinOrCreate(locale);
+      setGameRoom(ROOM);
       console.log(ROOM.sessionId, "joined", ROOM.name);
-      setRoomID(ROOM.roomId);
-      setPlayerID(ROOM.sessionId);
 
       ROOM.onMessage("players", (res: IterableIterator<string>) => {
         setPlayerScores(
@@ -154,8 +152,8 @@ const Game = () => {
   };
 
   const leaveRoom = () => {
-    ROOM.leave();
-    setRoomID("");
+    gameRoom?.leave();
+    setGameRoom(null);
     setPlayerScores({});
   };
 
@@ -167,7 +165,7 @@ const Game = () => {
             <h1 className="text-3xl text-green-900">{counter}</h1>
             <h1 className="text-5xl text-sub-color">{seconds}</h1>
           </>
-        ) : !roomID ? (
+        ) : !ROOM ? (
           <button
             className={`inline-flex items-center text-2xl text-sub-color
                       first-letter:text-center hover:cursor-pointer 
@@ -220,7 +218,7 @@ const Game = () => {
 
       {isTiming ? null : communicating ? (
         <LoadingButton />
-      ) : roomID ? (
+      ) : ROOM ? (
         <button
           onClick={leaveRoom}
           className=" m-3 rounded-md px-3 py-2 text-xl font-medium text-sub-color hover:bg-sub-color hover:text-accent sm:text-2xl"
